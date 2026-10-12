@@ -9,18 +9,17 @@ Name: スウォッチ名とカラー値を整理
 Author: 〓
 Description-BEGIN
 選んだプロセスカラー（CMYK／RGB）をカラー値の名前に変更します。
+RGBはInDesignのカラー変換でCMYKに置き換えます。
 カラー値を変更しない／1刻み／5刻み／10刻みから選べます。
 Description-END
 SCRIPTMETA-END
 
-Credits: ロック（Codex）／さとるの依頼により作成。
 注意事項:
 ・丸めると、対象スウォッチを使う文字や図形の色も変わります。
 ・特色、Lab、混合インキ、グラデーション、濃淡、標準スウォッチは対象外。
 ・同名スウォッチが存在する場合は、その色全体を変更せず報告します。
-・スウォッチの統合、カラーモード変換は行いません。
+・RGBはCMYKに変換します。スウォッチの統合は行いません。
 ・チェック専用APIではなく、カラー値に一致する名前を設定する方式です。
-・構文確認のみ。InDesignでの動作とチェック状態、取り消しは未検証。
 */
 (function () {
     if (app.documents.length === 0) { alert("ドキュメントを開いてから実行してね。"); return; }
@@ -39,6 +38,7 @@ Credits: ロック（Codex）／さとるの依頼により作成。
     var w = new Window("dialog", "スウォッチ名とカラー値を整理");
     w.orientation = "column"; w.alignChildren = "fill";
     w.add("statictext", undefined, "対象のスウォッチ（複数選択可）");
+    w.add("statictext", undefined, "選択したRGBスウォッチはCMYKに変換します。");
     var list = w.add("listbox", undefined, [], {multiselect:true});
     list.preferredSize = [520, 280];
     for (i = 0; i < targets.length; i++) {
@@ -56,14 +56,13 @@ Credits: ロック（Codex）／さとるの依頼により作成。
     var row = w.add("group"); row.add("statictext", undefined, "カラー値の丸め：");
     var rounding = row.add("dropdownlist", undefined, ["変更しない", "1刻み", "5刻み", "10刻み"]);
     rounding.selection = 0;
-    w.add("statictext", undefined, "四捨五入。RGBは0〜255、CMYKは0〜100に収めます。");
+    w.add("statictext", undefined, "変換後のCMYK値を四捨五入し、0〜100に収めます。");
     w.add("statictext", undefined, "丸めると、使用中の文字や図形の色も変わります。");
     var buttons = w.add("group"); buttons.alignment = "right";
     var run = buttons.add("button", undefined, "実行", {name:"ok"});
     buttons.add("button", undefined, "キャンセル", {name:"cancel"});
     run.onClick = function () {
         if (!list.selection || !list.selection.length) { alert("対象を選んでね。"); return; }
-        if (!naming.value && rounding.selection.index === 0) { alert("名前の変更か、カラー値の丸めを選んでね。"); return; }
         w.close(1);
     };
     if (w.show() !== 1) return;
@@ -78,7 +77,7 @@ Credits: ロック（Codex）／さとるの依頼により作成。
         return true;
     }
     function valueName(color, values) {
-        var keys = color.space === ColorSpace.CMYK ? ["C", "M", "Y", "K"] : ["R", "G", "B"];
+        var keys = ["C", "M", "Y", "K"];
         var parts = [];
         for (var k = 0; k < keys.length; k++) parts.push(keys[k] + "=" + Math.round(values[k]));
         return parts.join(" ");
@@ -86,10 +85,15 @@ Credits: ロック（Codex）／さとるの依頼により作成。
     function process() {
         for (var j = 0; j < chosen.length; j++) {
             var color = chosen[j], oldName = color.name, oldValues = color.colorValue.slice(0);
+            var oldSpace = color.space;
             var values = oldValues.slice(0), newName, valueChanged, nameChanged;
             try {
+                if (oldSpace === ColorSpace.RGB) {
+                    color.space = ColorSpace.CMYK;
+                    values = color.colorValue.slice(0);
+                }
                 if (step) {
-                    var maximum = color.space === ColorSpace.CMYK ? 100 : 255;
+                    var maximum = 100;
                     for (var k = 0; k < values.length; k++) {
                         values[k] = Math.max(0, Math.min(maximum, Math.round(values[k] / step) * step));
                     }
@@ -97,15 +101,19 @@ Credits: ロック（Codex）／さとるの依頼により作成。
                 newName = rename ? valueName(color, values) : oldName;
                 var existing = doc.swatches.itemByName(newName);
                 if (rename && existing.isValid && existing.id !== color.id) {
+                    color.space = oldSpace;
+                    color.colorValue = oldValues;
+                    color.name = oldName;
                     skipped.push(oldName + "：同名「" + newName + "」が存在するため変更なし"); continue;
                 }
                 valueChanged = !same(oldValues, values); nameChanged = oldName !== newName;
                 if (valueChanged) color.colorValue = values;
                 // 同じ名前でも再設定し、カラー値による命名として認識させる。
                 if (rename) color.name = newName;
-                if (valueChanged || nameChanged) changed++; else unchanged++;
+                if (oldSpace !== color.space || valueChanged || nameChanged) changed++; else unchanged++;
             } catch (e) {
                 var restoreErrors = [];
+                try { color.space = oldSpace; } catch (r0) { restoreErrors.push(String(r0)); }
                 try { color.colorValue = oldValues; } catch (r1) { restoreErrors.push(String(r1)); }
                 try { color.name = oldName; } catch (r2) { restoreErrors.push(String(r2)); }
                 skipped.push(oldName + "：" + String(e) + (restoreErrors.length ? "／復元失敗：" + restoreErrors.join("、") : "（元の値へ復元）"));
