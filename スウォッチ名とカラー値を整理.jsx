@@ -6,7 +6,7 @@ Version: 1.0.0
 Meta-URL: https://github.com/SatoruTakahashi7/InDesign-swatch-normalizer
 Target-App: Adobe InDesign
 Name: スウォッチ名とカラー値を整理
-Author: 〓
+Author: GYAHTEI Design Laboratory / Satoru Takahashi
 Description-BEGIN
 選んだプロセスカラー（CMYK／RGB）をカラー値の名前に変更します。
 RGBはInDesignのカラー変換でCMYKに置き換えます。
