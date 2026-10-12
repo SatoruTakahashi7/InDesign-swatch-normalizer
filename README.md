@@ -31,3 +31,14 @@ RGBは先にCMYKへ変換し、変換後の値を丸めます。各チャンネ�
 - 「カラー値を名前にする」はチェック専用APIではなく、値に一致する名前を設定する方式です。[Adobeコミュニティの実例](https://community.adobe.com/questions-671/change-all-swatch-names-to-name-with-color-value-843611)を参考にしています。
 - 変更を1回の取り消しにまとめる設計です。
 
+## Credits
+
+企画: GYAHTEI Design Laboratory / Satoru Takahashi  
+実装支援: OpenAI Codex
+
+## 免責事項
+
+実行前にドキュメントを保存し、最初は複製ドキュメントで結果を確認してください。
+
+本スクリプトの使用は、利用者自身の責任で行ってください。本スクリプトの使用により生じたデータ損失、色の変化、文字化け、レイアウト崩れ、その他一切の損害について、制作者・提供者は責任を負いません。
+
