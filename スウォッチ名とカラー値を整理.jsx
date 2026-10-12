@@ -1,9 +1,9 @@
 #target "indesign"
 /*
 SCRIPTMETA-BEGIN
-Script-ID: 〓
+Script-ID: InDesign-swatch-normalizer
 Version: 1.0.0
-Meta-URL: 〓
+Meta-URL: https://github.com/SatoruTakahashi7/InDesign-swatch-normalizer
 Target-App: Adobe InDesign
 Name: スウォッチ名とカラー値を整理
 Author: 〓
